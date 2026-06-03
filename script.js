@@ -1,5 +1,6 @@
-// Fungsi untuk memuat riwayat saat halaman dibuka
-window.onload = muatRiwayat;
+document.addEventListener("DOMContentLoaded", function() {
+    muatRiwayat();
+});
 
 function simpanCatatan() {
     const data = {
@@ -8,7 +9,7 @@ function simpanCatatan() {
         bangun: document.getElementById('wakeTime').value,
         makan: document.getElementById('foodLog').value,
         catatan: document.getElementById('dailyNotes').value,
-        waktuSimpan: new Date().toLocaleTimeString() // Jam saat ini
+        waktuSimpan: new Date().toLocaleTimeString()
     };
 
     if(!data.tanggal) { alert("Pilih tanggal dulu!"); return; }
@@ -18,23 +19,41 @@ function simpanCatatan() {
     localStorage.setItem('jurnalData', JSON.stringify(daftarCatatan));
     
     alert("Berhasil disimpan!");
-    muatRiwayat(); // Update tampilan riwayat langsung
+    muatRiwayat();
 }
 
 function muatRiwayat() {
     const riwayatArea = document.getElementById('riwayatArea');
-    let daftarCatatan = JSON.parse(localStorage.getItem('jurnalData')) || [];
+    const daftarCatatan = JSON.parse(localStorage.getItem('jurnalData')) || [];
     
-    riwayatArea.innerHTML = daftarCatatan.map(item => `
-        <div style="border-bottom:1px solid #ccc; padding:10px 0;">
-            <strong>${item.tanggal}</strong> (${item.waktuSimpan})<br>
+    if (daftarCatatan.length === 0) {
+        riwayatArea.innerHTML = "<p>Belum ada catatan.</p>";
+        return;
+    }
+
+    riwayatArea.innerHTML = daftarCatatan.slice().reverse().map(item => `
+        <div style="border-bottom:1px solid #eee; padding:10px 0; font-size: 14px;">
+            <strong>${item.tanggal}</strong> <small>(${item.waktuSimpan})</small><br>
             Tidur: ${item.tidur} | Bangun: ${item.bangun}<br>
-            Makan: ${item.makan}<br>
+            Makan: <i>${item.makan}</i><br>
             Catatan: ${item.catatan}
         </div>
     `).join('');
 }
 
 function downloadExcel() {
-    // ... (fungsi download tetap sama seperti sebelumnya)
+    let daftarCatatan = JSON.parse(localStorage.getItem('jurnalData')) || [];
+    if(daftarCatatan.length === 0) { alert("Belum ada data!"); return; }
+    
+    let csvContent = "data:text/csv;charset=utf-8,Tanggal,Jam Tidur,Jam Bangun,Makan,Catatan,Waktu Input\n";
+    daftarCatatan.forEach(item => {
+        csvContent += `${item.tanggal},${item.tidur},${item.bangun},"${item.makan}","${item.catatan}",${item.waktuSimpan}\n`;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "catatan_harian.csv");
+    document.body.appendChild(link);
+    link.click();
 }
